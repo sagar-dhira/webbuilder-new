@@ -25,6 +25,7 @@ export const SectionBlock = {
                 "ThreeColumn", "TwoRow", "ThreeRow", "Header2Col", "TwoColFooter",
                 "Sidebar2Row", "Grid2x2", "Layout1", "Layout2", "Layout3",
                 "Layout4", "Layout5", "Layout6", "Layout7", "Layout8",
+                "ETL",
             ],
         },
     },

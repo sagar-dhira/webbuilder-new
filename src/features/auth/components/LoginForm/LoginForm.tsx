@@ -1,14 +1,16 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ShieldCheck } from 'lucide-react'
 import { Button } from '@/ui/button'
 import { FormField } from '@/shared/components/FormField'
-import { useLogin } from '../../hooks/useLogin'
+import { useAuth } from '@/contexts/AuthContext'
 import { loginSchema, type LoginFormData } from '../../schemas/login.schema'
 import styles from './LoginForm.module.scss'
 
 export function LoginForm() {
-  const loginMutation = useLogin()
-
+  const { login, isKeycloak } = useAuth()
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -21,8 +23,36 @@ export function LoginForm() {
     },
   })
 
-  const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data)
+  const handleKeycloakLogin = () => {
+    login('', '')
+  }
+
+  const onSubmit = async (data: LoginFormData) => {
+    setSubmitError(null)
+    const res = await login(data.email, data.password)
+    if (!res.success) {
+      setSubmitError(res.msg || 'Login failed')
+      return
+    }
+    window.location.href = '/'
+  }
+
+  if (isKeycloak) {
+    return (
+      <div className={styles.loginForm}>
+        <Button
+          type="button"
+          onClick={handleKeycloakLogin}
+          className={styles.submitButton}
+        >
+          <ShieldCheck className="w-4 h-4 mr-2" />
+          Sign in with Keycloak
+        </Button>
+        <p className={styles.footer}>
+          You will be redirected to the secure login page.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -43,18 +73,16 @@ export function LoginForm() {
         error={errors.password?.message}
       />
 
-      {loginMutation.isError && (
-        <div className={styles.error}>
-          {loginMutation.error?.message || 'Login failed'}
-        </div>
+      {submitError && (
+        <div className={styles.error}>{submitError}</div>
       )}
 
       <Button
         type="submit"
-        disabled={isSubmitting || loginMutation.isPending}
+        disabled={isSubmitting}
         className={styles.submitButton}
       >
-        {isSubmitting || loginMutation.isPending ? 'Logging in...' : 'Login'}
+        {isSubmitting ? 'Logging in...' : 'Login'}
       </Button>
     </form>
   )

@@ -30,17 +30,28 @@ function App() {
           padding: "40px 20px",
         }}
       >
-        <h1
-          style={{
-            color: "#f8fafc",
-            fontSize: "2.2rem",
-            fontWeight: 700,
-            marginBottom: "8px",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Choose a Template
-        </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "8px" }}>
+          <h1
+            style={{
+              color: "#f8fafc",
+              fontSize: "2.2rem",
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Choose a Template
+          </h1>
+          <a
+            href="/login"
+            style={{
+              color: "#94a3b8",
+              fontSize: "14px",
+              textDecoration: "none",
+            }}
+          >
+            Log in
+          </a>
+        </div>
         <p
           style={{
             color: "#94a3b8",

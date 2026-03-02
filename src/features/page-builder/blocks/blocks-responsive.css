@@ -42,6 +42,23 @@
   overflow: hidden;
 }
 
+/* ---- Superset chart: responsive, never overflow ---- */
+.pb-superset-chart {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* ---- ETL Actions: override Puck's pointer-events:none so dropdown is clickable ---- */
+.pb-etl-actions {
+  position: relative;
+  z-index: 9999;
+}
+.pb-etl-actions,
+.pb-etl-actions * {
+  pointer-events: auto !important;
+}
+
 /* ============================================
    Tablet  (≤ 1024px)
    ============================================ */
@@ -91,6 +108,11 @@
 
   /* Charts get smaller height */
   .pb-chart {
+    min-height: 200px;
+  }
+
+  /* Superset chart: ensure min height on mobile */
+  .pb-superset-chart {
     min-height: 200px;
   }
 }

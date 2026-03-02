@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Config } from "@puckeditor/core";
 
 // Layout blocks
@@ -72,9 +73,11 @@ import { CardBlock } from "../blocks/CardBlock";
 import { BarChartBlock } from "../blocks/BarChartBlock";
 import { DoughnutChartBlock } from "../blocks/DoughnutChartBlock";
 import { AreaChartBlock } from "../blocks/AreaChartBlock";
+import { createSupersetChartBlock } from "../blocks/SupersetChartBlock";
+import { ETLBlockConfig } from "../blocks/ETLBlock";
+import type { SupersetChart } from "../api/superset.api";
 
-export const config: Config = {
-  components: {
+const baseComponents = {
     // Layout
     Section: SectionBlock,
     Container: ContainerBlock,
@@ -147,8 +150,99 @@ export const config: Config = {
     BarChart: BarChartBlock,
     DoughnutChart: DoughnutChartBlock,
     AreaChart: AreaChartBlock,
-  },
-  categories: {
+
+    // ETL
+    ETL: ETLBlockConfig,
+};
+
+/** Walk all slot arrays in props (children, sidebar, main, left, right, etc.) */
+function walkSlotArrays(items: any[], fn: (item: any) => void) {
+  if (!Array.isArray(items)) return;
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue;
+    fn(item);
+    const props = item?.props;
+    if (props && typeof props === "object") {
+      for (const v of Object.values(props)) {
+        if (Array.isArray(v) && v.some((x) => x && typeof x === "object" && "type" in x)) {
+          walkSlotArrays(v, fn);
+        }
+      }
+    }
+  }
+}
+
+/** Extract baseUrl from first Superset chart in saved data */
+function extractBaseUrlFromData(data: any): string {
+  let result = "";
+  walkSlotArrays(data?.content ?? [], (item) => {
+    if (!result && item?.type?.startsWith?.("SupersetChart_") && item?.props?.baseUrl) {
+      result = item.props.baseUrl;
+    }
+  });
+  return result;
+}
+
+/** Extract Superset chart refs from saved data for rendering */
+function extractSupersetChartRefs(data: any): Array<{ id: number; slice_name: string }> {
+  const refs: Array<{ id: number; slice_name: string }> = [];
+  walkSlotArrays(data?.content ?? [], (item) => {
+    if (item?.type?.startsWith?.("SupersetChart_")) {
+      const id = parseInt(item.type.replace("SupersetChart_", ""), 10);
+      if (!isNaN(id) && item.props) {
+        refs.push({ id, slice_name: item.props.chartTitle || `Chart ${id}` });
+      }
+    }
+  });
+  return refs;
+}
+
+/** Chart and ETL components that can be placed inside containers/layouts */
+const CHART_COMPONENTS = ["BarChart", "DoughnutChart", "AreaChart"];
+const ETL_COMPONENTS = ["ETL"];
+
+/** Patch component to allow chart components in slot zones */
+function patchSlotAllows(comp: any, extraAllow: string[]): any {
+  if (!comp?.fields) return comp;
+  const fields: Record<string, any> = {};
+  for (const [k, v] of Object.entries(comp.fields)) {
+    const f = v as { type?: string; allow?: string[] };
+    if (f?.type === "slot" && Array.isArray(f.allow)) {
+      fields[k] = { ...f, allow: [...new Set([...f.allow, ...extraAllow])] };
+    } else {
+      fields[k] = v;
+    }
+  }
+  return Object.keys(fields).length ? { ...comp, fields: { ...comp.fields, ...fields } } : comp;
+}
+
+/** Build full config - from API charts or from saved data for rendering */
+export function buildConfig(charts: SupersetChart[] = [], baseUrl: string = "", savedData?: any): Config {
+  let supersetRefs = charts.map((c) => ({ id: c.id, slice_name: c.slice_name }));
+  if (supersetRefs.length === 0 && savedData) {
+    supersetRefs = extractSupersetChartRefs(savedData);
+    baseUrl = baseUrl || extractBaseUrlFromData(savedData) || "";
+  }
+  const supersetBlocks = Object.fromEntries(
+    supersetRefs.map((r) => [
+      `SupersetChart_${r.id}`,
+      createSupersetChartBlock(r.id, r.slice_name, baseUrl || ""),
+    ])
+  );
+  const supersetNames = supersetRefs.map((r) => `SupersetChart_${r.id}`);
+  const allChartNames = [...CHART_COMPONENTS, ...ETL_COMPONENTS, ...supersetNames];
+  const patchedBase = Object.fromEntries(
+    Object.entries(baseComponents).map(([k, v]) => [k, patchSlotAllows(v, allChartNames)])
+  );
+  return {
+    components: {
+      ...patchedBase,
+      ...supersetBlocks,
+    } as Config["components"],
+    root: {
+      render: ({ children }: { children: ReactNode }) => <>{children}</>,
+    },
+    categories: {
     Layout: {
       components: [
         "Section", "Container", "TwoColumn", "ThreeColumn",
@@ -179,5 +273,16 @@ export const config: Config = {
     Charts: {
       components: ["BarChart", "DoughnutChart", "AreaChart"],
     },
+    ETL: {
+      title: "ETL",
+      components: ["ETL"],
+      visible: false,
+    },
+    SupersetCharts: {
+      title: "Superset Charts",
+      components: supersetRefs.map((c) => `SupersetChart_${c.id}`),
+      visible: false,
+    },
   },
-};
+  };
+}

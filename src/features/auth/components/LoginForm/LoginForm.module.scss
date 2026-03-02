@@ -22,3 +22,18 @@
   margin-top: $spacing-md;
 }
 
+.footer {
+  margin-top: $spacing-lg;
+  text-align: center;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.link {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  &:hover {
+    text-decoration: none;
+  }
+}
+

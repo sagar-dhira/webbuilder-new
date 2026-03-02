@@ -1,10 +1,20 @@
+/**
+ * Renders page - extracts chart refs from saved data for config
+ */
+
 import { Render } from "@puckeditor/core";
-import { config } from "../config/puckConfig";
+import { buildConfig } from "../config/puckConfig";
 
 interface Props {
   data: any;
 }
 
 export default function PageRenderer({ data }: Props) {
-  return <Render config={config} data={data} />;
+  const config = buildConfig([], "", data);
+  const normalizedData = {
+    content: data?.content ?? [],
+    root: data?.root ?? { props: {} },
+    zones: data?.zones ?? {},
+  };
+  return <Render config={config} data={normalizedData} />;
 }

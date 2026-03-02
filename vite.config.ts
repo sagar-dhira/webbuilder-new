@@ -46,18 +46,18 @@ export default defineConfig({
 
   // Development server configuration
   server: {
-    port: 3000,
+    port: 5173,
     open: true,
     host: true, // Listen on all addresses
     cors: true,
-    // Proxy configuration for API (uncomment if needed)
-    // proxy: {
-    //   '/api': {
-    //     target: 'http://localhost:3001',
-    //     changeOrigin: true,
-    //     secure: false,
-    //   },
-    // },
+    // Proxy API to avoid CORS (backend allows localhost:5173, we run on 3000)
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 
   // Preview server configuration (for production preview)
@@ -130,6 +130,7 @@ export default defineConfig({
       'react-dom',
       'react-router-dom',
       '@tanstack/react-query',
+      'keycloak-js',
     ],
     // Exclude large dependencies that should be loaded on demand
     exclude: [],

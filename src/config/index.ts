@@ -8,6 +8,8 @@ export const config = {
   appEnv: import.meta.env.VITE_APP_ENV || 'development',
   appName: 'React Template',
   version: '1.0.0',
+  /** Superset instance base URL - charts use this when block baseUrl is empty */
+  supersetBaseUrl: import.meta.env.VITE_SUPERSET_BASE_URL || '',
 } as const
 
 /**

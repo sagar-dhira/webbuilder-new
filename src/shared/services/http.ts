@@ -25,8 +25,8 @@ export const httpClient = createHttpClient()
  */
 httpClient.interceptors.request.use(
   (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem('auth_token')
+    // Add auth token if available (auth_token or token for framely)
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
